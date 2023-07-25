@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cron-hpa
+  labels:
+    app: cron-hpa
+spec:
+  selector:
+    matchLabels:
+      app: cron-hpa
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: cron-hpa
+    spec:
+      serviceAccountName: cron-hpa-serviceaccount
+      # imagePullSecrets:
+      #   - name: ""
+      containers:
+        - name: cron-hpa
+          image: docker.io/layer7api/cron-hpa:0.0.1
+          imagePullPolicy: Always
+          command:
+          - /cron-hpa
+          resources:
+            limits:
+              cpu: 250m
+              memory: 64Mi
+            requests:
+              cpu: 200m
+              memory: 32Mi
+          volumeMounts:
+            - name: cron-hpa
+              mountPath: /config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: cron-hpa
+          configMap:
+            name: cron-hpa-configmap
+            items:
+            - key: config.yaml
+              path: config.yaml
